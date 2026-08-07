@@ -139,6 +139,10 @@
     .subtle{border:0;background:transparent;color:#646f83;padding:7px 8px;border-radius:10px;font-size:12px;font-weight:800}
     .subtle:hover{background:#f4f6fa}
     .subtle.danger{color:var(--danger)}
+    .bookmark-btn{width:30px;height:30px;border:0;background:transparent;border-radius:9px;padding:5px;color:#a5adbb;display:grid;place-items:center;flex:none}
+    .bookmark-btn:hover,.bookmark-btn:active{background:#f7f8fa;color:#9299aa}
+    .bookmark-btn.active{color:#8f97aa;background:#f5f6f9}
+    .bookmark-btn svg{width:17px;height:17px;display:block;pointer-events:none}
     .trash-btn{margin-left:auto;width:30px;height:30px;border:0;background:transparent;border-radius:9px;padding:6px;color:#a5adbb;display:grid;place-items:center;flex:none}
     .trash-btn:hover,.trash-btn:active{background:#f6f7f9;color:var(--danger)}
     .trash-btn svg{width:16px;height:16px;display:block;pointer-events:none}
@@ -251,6 +255,7 @@
         <div class="seg" aria-label="タイムライン表示切替">
           <button type="button" data-view="roots" class="active">投稿だけ</button>
           <button type="button" data-view="threads">続きを表示</button>
+          <button type="button" data-view="bookmarks">ブックマーク</button>
         </div>
       </div>
     </div>
@@ -339,6 +344,7 @@
         text: asText(p.text),
         tags: normalizeTags(p.tags),
         createdAt: asTime(p.createdAt),
+        bookmarked: !!p.bookmarked,
         replies: []
       };
 
@@ -349,7 +355,8 @@
             id: asText(r.id) || uid(),
             text: asText(r.text),
             tags: normalizeTags(r.tags),
-            createdAt: asTime(r.createdAt)
+            createdAt: asTime(r.createdAt),
+            bookmarked: !!r.bookmarked
           });
         }
       }
@@ -470,6 +477,14 @@
       '</div></div></div>';
   }
 
+  function bookmarkButtonHtml(active, kind, postId, replyId){
+    var action = kind === 'post' ? 'toggle-bookmark-post' : 'toggle-bookmark-reply';
+    var attrs = kind === 'post'
+      ? ' data-id=\"' + escapeHtml(postId) + '\"'
+      : ' data-post-id=\"' + escapeHtml(postId) + '\" data-reply-id=\"' + escapeHtml(replyId) + '\"';
+    return '<button class=\"bookmark-btn' + (active ? ' active' : '') + '\" type=\"button\" aria-label=\"' + (active ? 'ブックマークを解除' : 'ブックマーク') + '\" title=\"' + (active ? 'ブックマークを解除' : 'ブックマーク') + '\" data-action=\"' + action + '\"' + attrs + '><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M7 4.5A1.5 1.5 0 0 1 8.5 3h7A1.5 1.5 0 0 1 17 4.5V21l-5-3.4L7 21V4.5Z\" fill=\"' + (active ? 'currentColor' : 'none') + '\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linejoin=\"round\"/></svg></button>';
+  }
+
   function renderRootCard(post, inFlow){
     var id = escapeHtml(post.id);
     var hasReplies = post.replies.length > 0;
@@ -482,6 +497,7 @@
         '<div class="actions">' +
         '<button class="subtle" type="button" data-action="reply" data-id="' + id + '">続きを書く</button>' +
         '<button class="subtle" type="button" data-action="edit-post" data-id="' + id + '">編集</button>' +
+        bookmarkButtonHtml(post.bookmarked, 'post', post.id, '') +
         '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-post" data-id="' + id + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
         '<span class="reply-count">' + countLabel + '</span>' +
         '</div></article>';
@@ -492,6 +508,7 @@
       '<div class="actions">' +
       '<button class="subtle" type="button" data-action="reply" data-id="' + id + '">続きを書く</button>' +
       '<button class="subtle" type="button" data-action="edit-post" data-id="' + id + '">編集</button>' +
+      bookmarkButtonHtml(post.bookmarked, 'post', post.id, '') +
       '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-post" data-id="' + id + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
       '<span class="reply-count">' + countLabel + '</span>' +
       '</div></article>';
@@ -504,6 +521,7 @@
       '<div class="body">' + highlight(reply.text) + '</div>' +
       '<div class="actions">' +
       '<button class="subtle" type="button" data-action="edit-reply" data-post-id="' + escapeHtml(postId) + '" data-reply-id="' + escapeHtml(reply.id) + '">編集</button>' +
+      bookmarkButtonHtml(reply.bookmarked, 'reply', postId, reply.id) +
       '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-reply" data-post-id="' + escapeHtml(postId) + '" data-reply-id="' + escapeHtml(reply.id) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
       '</div></article>';
   }
@@ -516,6 +534,7 @@
       '<div class="actions">' +
       '<button class="subtle" type="button" data-action="open-thread" data-id="' + escapeHtml(post.id) + '">この流れを見る</button>' +
       '<button class="subtle" type="button" data-action="edit-reply" data-post-id="' + escapeHtml(post.id) + '" data-reply-id="' + escapeHtml(reply.id) + '">編集</button>' +
+      bookmarkButtonHtml(reply.bookmarked, 'reply', post.id, reply.id) +
       '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-reply" data-post-id="' + escapeHtml(post.id) + '" data-reply-id="' + escapeHtml(reply.id) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
       '</div></article>';
   }
@@ -647,6 +666,27 @@
           html += '<div class="thread">' + renderRootCard(posts[i], false) + '</div>';
         }
         els.countText.textContent = posts.length + '件';
+      }else if(view === 'bookmarks'){
+        var bookmarkedItems = [];
+        for(var bi=0;bi<data.posts.length;bi++){
+          var bp = data.posts[bi];
+          if(bp.bookmarked && (!query || itemMatches(bp))) bookmarkedItems.push({type:'post', createdAt:bp.createdAt, post:bp});
+          for(var br=0;br<bp.replies.length;br++){
+            var breply = bp.replies[br];
+            if(breply.bookmarked && (!query || itemMatches(breply))) bookmarkedItems.push({type:'reply', createdAt:breply.createdAt, post:bp, reply:breply});
+          }
+        }
+        bookmarkedItems.sort(function(a,b){ return b.createdAt - a.createdAt; });
+        els.countText.textContent = bookmarkedItems.length + '件';
+        if(!bookmarkedItems.length){
+          els.timeline.innerHTML = '<div class="empty">' + (query ? '該当するブックマークがありません' : 'まだブックマークがありません。残しておきたい投稿にブックマークを付けてみましょう。') + '</div>';
+          return;
+        }
+        for(var bk=0;bk<bookmarkedItems.length;bk++){
+          var bitem = bookmarkedItems[bk];
+          if(bitem.type === 'post') html += '<div class="thread">' + renderRootCard(bitem.post, false) + '</div>';
+          else html += renderTimelineReply(bitem.reply, bitem.post);
+        }
       }else{
         var items = [];
         for(var i=0;i<data.posts.length;i++){
@@ -679,7 +719,7 @@
   function addPost(){
     var text = els.postText.value.trim();
     if(!text) return;
-    data.posts.push({ id:uid(), text:text, tags:[], createdAt:Date.now(), replies:[] });
+    data.posts.push({ id:uid(), text:text, tags:[], createdAt:Date.now(), bookmarked:false, replies:[] });
     els.postText.value = '';
     save();
     render();
@@ -696,7 +736,7 @@
     for(var i=0;i<data.posts.length;i++) if(data.posts[i].id === postId){ post = data.posts[i]; break; }
     if(!post) return;
 
-    post.replies.push({ id:uid(), text:text, tags:[], createdAt:Date.now() });
+    post.replies.push({ id:uid(), text:text, tags:[], createdAt:Date.now(), bookmarked:false });
     focusedPostId = postId;
     save();
     render();
@@ -884,6 +924,33 @@
 
       if(action === 'save-edit'){
         saveEdit();
+        return;
+      }
+
+      if(action === 'toggle-bookmark-post'){
+        for(var bp=0;bp<data.posts.length;bp++){
+          if(data.posts[bp].id === id){ data.posts[bp].bookmarked = !data.posts[bp].bookmarked; break; }
+        }
+        save();
+        render();
+        return;
+      }
+
+      if(action === 'toggle-bookmark-reply'){
+        var bPostId = btn.getAttribute('data-post-id') || '';
+        var bReplyId = btn.getAttribute('data-reply-id') || '';
+        for(var bpi=0;bpi<data.posts.length;bpi++){
+          if(data.posts[bpi].id !== bPostId) continue;
+          for(var bri=0;bri<data.posts[bpi].replies.length;bri++){
+            if(data.posts[bpi].replies[bri].id === bReplyId){
+              data.posts[bpi].replies[bri].bookmarked = !data.posts[bpi].replies[bri].bookmarked;
+              break;
+            }
+          }
+          break;
+        }
+        save();
+        render();
         return;
       }
 
