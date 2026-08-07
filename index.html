@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f6f7f9" />
+  <title>ひらめきログ</title>
+  <style>
+    :root{
+      --bg:#f5f7fb;
+      --panel:#ffffff;
+      --panel-soft:#f8faff;
+      --text:#172033;
+      --muted:#7c879c;
+      --line:#e6eaf2;
+      --accent:#5b6cf9;
+      --accent-2:#7c5cff;
+      --accent-soft:#eef0ff;
+      --danger:#dc5c65;
+      --shadow:0 12px 34px rgba(35,48,76,.08);
+      --shadow-soft:0 5px 18px rgba(35,48,76,.055);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    html{background:var(--bg)}
+    body{
+      margin:0;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(91,108,249,.10), transparent 28%),
+        radial-gradient(circle at 95% 8%, rgba(124,92,255,.08), transparent 24%),
+        var(--bg);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+      line-height:1.65;
+      -webkit-text-size-adjust:100%;
+    }
+    button,input,textarea{font:inherit}
+    button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none}
+    button:active{opacity:.68}
+    .app{width:min(860px,100%);margin:0 auto;min-height:100vh;padding:0 16px 92px}
+
+    .topbar{
+      position:sticky;top:0;z-index:30;
+      margin:0 -16px;
+      padding:calc(10px + env(safe-area-inset-top)) 16px 12px;
+      background:rgba(245,247,251,.88);
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+      border-bottom:1px solid rgba(230,234,242,.86);
+    }
+    .toprow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand-wrap{display:flex;align-items:center;gap:10px;min-width:0}
+    .brand-mark{
+      width:34px;height:34px;border-radius:12px;display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      color:white;font-weight:900;box-shadow:0 7px 18px rgba(91,108,249,.25)
+    }
+    .brand{font-size:19px;font-weight:850;letter-spacing:.01em;white-space:nowrap}
+    .count{
+      font-size:12px;color:#59647a;background:white;border:1px solid var(--line);
+      border-radius:999px;padding:6px 9px;white-space:nowrap;box-shadow:var(--shadow-soft)
+    }
+    .top-actions{display:flex;align-items:center;gap:8px;position:relative}
+    .menu-btn{width:36px;height:36px;border:1px solid var(--line);background:rgba(255,255,255,.92);border-radius:11px;display:grid;place-items:center;padding:0;box-shadow:var(--shadow-soft);color:#69748a}
+    .menu-btn svg{width:19px;height:19px;display:block}
+    .app-menu{position:absolute;right:0;top:44px;width:210px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:7px;box-shadow:0 16px 42px rgba(35,48,76,.16);display:none;z-index:80}
+    .app-menu.open{display:block}
+    .menu-item{width:100%;border:0;background:transparent;color:#465167;text-align:left;border-radius:11px;padding:11px 12px;font-size:13px;font-weight:750;display:flex;align-items:center;gap:9px}
+    .menu-item:hover,.menu-item:active{background:#f4f6fa}
+    .menu-item svg{width:17px;height:17px;flex:none;color:#7a8497}
+    .menu-divider{height:1px;background:#eef1f5;margin:5px 3px}
+    .search{margin-top:10px;display:flex;gap:8px}
+    .search input{
+      width:100%;border:1px solid var(--line);background:rgba(255,255,255,.94);color:var(--text);
+      border-radius:14px;padding:11px 13px;outline:none;box-shadow:var(--shadow-soft)
+    }
+    .search input:focus{border-color:#bbc3ff;box-shadow:0 0 0 4px rgba(91,108,249,.10)}
+    .clear-btn{flex:none;border:1px solid var(--line);background:white;border-radius:14px;padding:0 13px;color:var(--muted);font-weight:700}
+
+    .intro{padding:22px 2px 8px}
+    .eyebrow{font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+    .intro h1{margin:4px 0 4px;font-size:clamp(24px,5vw,34px);line-height:1.25;letter-spacing:-.03em}
+    .intro p{margin:0;color:var(--muted);font-size:14px}
+
+    .composer{
+      margin:14px 0 18px;background:rgba(255,255,255,.96);border:1px solid rgba(219,224,237,.95);
+      border-radius:26px;box-shadow:var(--shadow);padding:16px;position:relative;overflow:hidden
+    }
+    .composer:before{content:"";position:absolute;left:0;top:0;right:0;height:4px;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+    .composer-label{font-size:12px;font-weight:800;color:#69748a;margin-bottom:4px}
+    .composer textarea{display:block;width:100%;min-height:112px;resize:vertical;border:0;outline:0;background:transparent;color:var(--text);font-size:17px;line-height:1.65;padding:4px 0 8px}
+    .composer textarea::placeholder{color:#a4adbd}
+    .composer-foot{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:11px}
+    .hint{font-size:11px;color:var(--muted)}
+    .primary{border:0;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:white;font-weight:800;border-radius:13px;padding:10px 20px;min-width:92px;box-shadow:0 7px 17px rgba(91,108,249,.23)}
+    .primary:active{transform:translateY(1px);box-shadow:0 3px 10px rgba(91,108,249,.18)}
+
+    .content-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:2px 2px 10px}
+    .content-title{font-size:15px;font-weight:850;letter-spacing:.01em}
+    .content-sub{font-size:11px;color:var(--muted);margin-top:1px}
+    .toolbar{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 0 10px}
+    .toolbar::-webkit-scrollbar{display:none}
+    .seg{display:inline-flex;padding:4px;border-radius:15px;background:#e9edf5;gap:4px;flex:none}
+    .seg button{border:0;background:transparent;padding:8px 12px;border-radius:11px;color:#657086;font-size:13px;font-weight:800;white-space:nowrap}
+    .seg button.active{background:white;color:var(--text);box-shadow:0 2px 7px rgba(32,43,67,.10)}
+
+    .empty{color:var(--muted);text-align:center;padding:58px 18px;font-size:14px;background:rgba(255,255,255,.62);border:1px dashed #dfe4ee;border-radius:22px}
+    .thread{margin-bottom:18px}
+    .flow-thread{position:relative;background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow-soft);overflow:hidden}
+    .flow-item{position:relative;padding:16px 15px 14px 42px}
+    .flow-item + .flow-item{border-top:1px solid #eef1f6}
+    .flow-item:before{content:"";position:absolute;left:20px;top:0;bottom:0;width:2px;background:#dfe4ff}
+    .flow-item:first-child:before{top:29px}
+    .flow-item:last-child:before{bottom:calc(100% - 29px)}
+    .flow-dot{position:absolute;left:14px;top:23px;width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid white;box-shadow:0 0 0 2px #dfe4ff;z-index:1}
+    .flow-item.reply-step .flow-dot{width:11px;height:11px;left:15.5px;top:25px;background:#8994ff}
+    .flow-item.root-step{background:linear-gradient(180deg,#fbfbff,#fff)}
+    .flow-item .actions{border-top:0;padding-top:4px;margin-top:5px}
+    .flow-item .body{margin-bottom:7px}
+    .flow-composer-wrap{position:relative;padding:14px 14px 16px 42px;border-top:1px solid #eef1f6;background:#fafbff}
+    .flow-composer-wrap:before{content:"";position:absolute;left:20px;top:0;height:29px;width:2px;background:#dfe4ff}
+    .flow-composer-wrap .flow-dot{top:22px;background:#fff;border:3px solid var(--accent);box-shadow:0 0 0 2px #dfe4ff}
+    .focused-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px}
+    .back-btn{border:1px solid var(--line);background:white;color:#596477;border-radius:12px;padding:9px 13px;font-size:13px;font-weight:800;box-shadow:var(--shadow-soft)}
+    .focused-note{font-size:12px;color:var(--muted)}
+    .thread-composer{display:block;margin:12px 0 0;background:#fff;border:1px solid #dfe4ee;border-radius:20px;padding:13px;box-shadow:var(--shadow-soft)}
+    .thread-composer textarea{width:100%;min-height:92px;resize:vertical;border:0;outline:0;background:transparent;font-size:16px;line-height:1.6;color:var(--text)}
+    .card{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:22px;padding:15px;box-shadow:var(--shadow-soft)}
+    .reply-card{margin-top:10px}
+    .card[data-post-id]{cursor:pointer}
+    button[data-action^="delete-"]{position:relative;z-index:8;pointer-events:auto}
+    .card[data-post-id]:active{background:var(--panel-soft)}
+    .reply-count{transition:color .15s}
+    .meta{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;color:var(--muted);font-size:11px}
+    .kind{font-weight:850;color:#657089;letter-spacing:.06em;background:#f3f5fa;padding:3px 7px;border-radius:999px}
+    .reply-card .kind{color:#5d64b5;background:#eef0ff}
+    .body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:16px;margin:11px 0 10px;line-height:1.72;letter-spacing:.005em}
+    .actions{display:flex;align-items:center;gap:5px;margin-top:11px;flex-wrap:wrap;padding-top:9px;border-top:1px solid #f0f2f6}
+    .subtle{border:0;background:transparent;color:#646f83;padding:7px 8px;border-radius:10px;font-size:12px;font-weight:800}
+    .subtle:hover{background:#f4f6fa}
+    .subtle.danger{color:var(--danger)}
+    .trash-btn{margin-left:auto;width:30px;height:30px;border:0;background:transparent;border-radius:9px;padding:6px;color:#a5adbb;display:grid;place-items:center;flex:none}
+    .trash-btn:hover,.trash-btn:active{background:#f6f7f9;color:var(--danger)}
+    .trash-btn svg{width:16px;height:16px;display:block;pointer-events:none}
+    .reply-count{color:#7f899b;font-size:11px;margin-left:auto}
+    .reply-form{display:none;margin:9px 0 0 24px;background:#fff;border:1px solid #dfe4ee;border-radius:18px;padding:11px;box-shadow:var(--shadow-soft)}
+    .reply-form.open{display:block}
+    .reply-form textarea{width:100%;min-height:82px;resize:vertical;border:0;outline:0;background:transparent;font-size:15px;line-height:1.6;color:var(--text)}
+    .reply-form-foot{display:flex;justify-content:flex-end;gap:7px;margin-top:8px}
+    .small-btn{border:1px solid var(--line);background:white;color:#596477;border-radius:11px;padding:8px 12px;font-size:12px;font-weight:800}
+    .small-btn.send{border-color:var(--accent);background:var(--accent);color:white}
+    mark{background:#fff1a8;color:inherit;border-radius:3px;padding:0 1px}
+    .footer{text-align:center;color:#a2aaba;font-size:11px;padding:26px 0 8px}
+    .timeline-reply{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:22px;padding:15px;box-shadow:var(--shadow-soft);margin-bottom:18px}
+    .timeline-reply .kind{color:#5d64b5;background:#eef0ff}
+    .timeline-reply .parent-link{font-size:11px;color:var(--muted);margin-top:-3px;margin-bottom:7px}
+    .delete-modal{position:fixed;inset:0;z-index:999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(23,32,51,.34);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+    .delete-modal.open{display:flex}
+    .delete-box{width:min(360px,100%);background:#fff;border-radius:22px;padding:20px;box-shadow:0 20px 60px rgba(23,32,51,.22);border:1px solid var(--line)}
+    .delete-title{font-size:17px;font-weight:850;margin-bottom:6px}
+    .delete-text{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px}
+    .delete-actions{display:flex;justify-content:flex-end;gap:9px}
+    .delete-cancel,.delete-confirm{border:0;border-radius:12px;padding:10px 14px;font-weight:800}
+    .delete-cancel{background:#f1f3f7;color:#596477}
+    .delete-confirm{background:var(--danger);color:#fff}
+
+    .file-input{display:none}
+
+    @media (max-width:600px){
+      .app{padding-left:10px;padding-right:10px;padding-bottom:84px}
+      .topbar{margin-left:-10px;margin-right:-10px;padding-left:10px;padding-right:10px}
+      .intro{padding:18px 4px 5px}
+      .intro h1{font-size:25px}
+      .intro p{font-size:13px}
+      .composer{border-radius:22px;padding:14px;margin-top:11px}
+      .composer textarea{min-height:100px;font-size:16px}
+      .composer-foot{align-items:flex-end}
+      .hint{max-width:62%;line-height:1.45}
+      .primary{padding:10px 17px}
+      .content-head{align-items:center}
+      .card{border-radius:19px;padding:14px}
+      .body{font-size:16px}
+      .search input{font-size:16px}
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="toprow">
+        <div class="brand-wrap">
+          <div class="brand-mark">✦</div>
+          <div class="brand">ひらめきログ</div>
+        </div>
+        <div class="top-actions">
+          <div class="count" id="countText">0件</div>
+          <button id="menuButton" class="menu-btn" type="button" aria-label="メニュー" aria-expanded="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+          <div id="appMenu" class="app-menu" aria-hidden="true">
+            <button id="exportJson" class="menu-item" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              JSONを書き出す
+            </button>
+            <div class="menu-divider"></div>
+            <button id="importJsonBtn" class="menu-item" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V9m0 0 4 4m-4-4-4 4M5 7V4h14v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              JSONから復元
+            </button>
+            <input id="importJsonFile" class="file-input" type="file" accept="application/json,.json" />
+          </div>
+        </div>
+      </div>
+      <div class="search">
+        <input id="searchInput" type="search" placeholder="アイデア・続きを検索" autocomplete="off" />
+        <button class="clear-btn" id="clearSearch" type="button">クリア</button>
+      </div>
+    </header>
+
+    <section class="intro">
+      <div class="eyebrow">IDEA NOTE</div>
+      <h1>思いつきを、育てていく。</h1>
+      <p>まず書く。あとから返信で続きを重ねる。考えの流れをそのまま残せます。</p>
+    </section>
+
+    <section class="composer">
+      <div class="composer-label">新しいひらめき</div>
+      <textarea id="postText" placeholder="今、思いついたことは？"></textarea>
+      <div class="composer-foot">
+        <div class="hint">思いついたことをそのまま残せます</div>
+        <button id="postButton" class="primary" type="button">投稿する</button>
+      </div>
+    </section>
+
+    <div class="content-head">
+      <div>
+        <div class="content-title">アイデア一覧</div>
+        <div class="content-sub">見たい形やタグで絞り込めます</div>
+      </div>
+      <div class="toolbar">
+        <div class="seg" aria-label="タイムライン表示切替">
+          <button type="button" data-view="roots" class="active">投稿だけ</button>
+          <button type="button" data-view="threads">続きを表示</button>
+        </div>
+      </div>
+    </div>
+
+    <section id="timeline"></section>
+    <div class="footer">この端末のブラウザ内に自動保存されます</div>
+  </main>
+  <div class="delete-modal" id="deleteModal" aria-hidden="true">
+    <div class="delete-box" role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
+      <div class="delete-title" id="deleteTitle">削除しますか？</div>
+      <div class="delete-text" id="deleteText"></div>
+      <div class="delete-actions">
+        <button class="delete-cancel" type="button" data-action="cancel-delete">キャンセル</button>
+        <button class="delete-confirm" type="button" data-action="confirm-delete">削除する</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  'use strict';
+
+  var STORAGE_KEY = 'hiramekiLogData_v1';
+
+  function $(id){ return document.getElementById(id); }
+
+  var els = {
+    postText: $('postText'),
+    postButton: $('postButton'),
+    searchInput: $('searchInput'),
+    clearSearch: $('clearSearch'),
+    timeline: $('timeline'),
+    countText: $('countText'),
+    menuButton: $('menuButton'),
+    appMenu: $('appMenu'),
+    exportJson: $('exportJson'),
+    importJsonBtn: $('importJsonBtn'),
+    importJsonFile: $('importJsonFile')
+  };
+
+  var view = 'roots';
+  var query = '';
+  var expandedPosts = {};
+  var focusedPostId = '';
+  var data = load();
+  var pendingDelete = null;
+
+  function asText(value){
+    return value == null ? '' : String(value);
+  }
+
+  function asTime(value){
+    var n = Number(value);
+    return isFinite(n) && n > 0 ? n : Date.now();
+  }
+
+  function normalizeTags(tags){
+    if(!Array.isArray(tags)) return [];
+    var out = [];
+    for(var i=0;i<tags.length;i++){
+      var t = asText(tags[i]).trim();
+      if(t && out.indexOf(t) === -1) out.push(t);
+    }
+    return out;
+  }
+
+  function normalizeData(value){
+    var result = { posts: [] };
+    if(!value || !Array.isArray(value.posts)) return result;
+
+    for(var i=0;i<value.posts.length;i++){
+      var p = value.posts[i] || {};
+      var post = {
+        id: asText(p.id) || uid(),
+        text: asText(p.text),
+        tags: normalizeTags(p.tags),
+        createdAt: asTime(p.createdAt),
+        replies: []
+      };
+
+      if(Array.isArray(p.replies)){
+        for(var j=0;j<p.replies.length;j++){
+          var r = p.replies[j] || {};
+          post.replies.push({
+            id: asText(r.id) || uid(),
+            text: asText(r.text),
+            tags: normalizeTags(r.tags),
+            createdAt: asTime(r.createdAt)
+          });
+        }
+      }
+      result.posts.push(post);
+    }
+    return result;
+  }
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return { posts: [] };
+      return normalizeData(JSON.parse(raw));
+    }catch(e){
+      console.warn('保存データの読み込みに失敗しました:', e);
+      return { posts: [] };
+    }
+  }
+
+  function save(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      return true;
+    }catch(e){
+      console.warn('localStorage unavailable:', e);
+      return false;
+    }
+  }
+
+  function uid(){
+    return Date.now().toString(36) + Math.random().toString(36).slice(2,9);
+  }
+
+  function parseTags(value){
+    var parts = asText(value)
+      .replace(/＃/g,'#')
+      .split(/[\s,、#]+/);
+    var out = [];
+    for(var i=0;i<parts.length;i++){
+      var t = parts[i].trim();
+      if(t && out.indexOf(t) === -1) out.push(t);
+    }
+    return out;
+  }
+
+  function formatDate(ts){
+    try{
+      var d = new Date(asTime(ts));
+      return new Intl.DateTimeFormat('ja-JP',{
+        year:'numeric', month:'2-digit', day:'2-digit',
+        hour:'2-digit', minute:'2-digit'
+      }).format(d);
+    }catch(e){
+      return '';
+    }
+  }
+
+  function escapeHtml(str){
+    return asText(str).replace(/[&<>"']/g, function(ch){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch];
+    });
+  }
+
+  function escapeRegExp(str){
+    return asText(str).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  }
+
+  function highlight(str){
+    var escaped = escapeHtml(str);
+    if(!query) return escaped;
+    var terms = query.trim().split(/\s+/);
+    var out = escaped;
+    for(var i=0;i<terms.length;i++){
+      if(!terms[i]) continue;
+      var safeTerm = escapeRegExp(escapeHtml(terms[i]));
+      try{
+        out = out.replace(new RegExp('(' + safeTerm + ')','gi'), '<mark>$1</mark>');
+      }catch(e){}
+    }
+    return out;
+  }
+
+  function itemMatches(item){
+    var q = query.trim().toLowerCase();
+    if(!q) return true;
+    var hay = asText(item.text).toLowerCase();
+    var terms = q.split(/\s+/);
+    for(var i=0;i<terms.length;i++){
+      if(terms[i] && hay.indexOf(terms[i]) === -1) return false;
+    }
+    return true;
+  }
+
+  function postMatches(post){
+    var q = query.trim().toLowerCase();
+    if(!q) return true;
+    var pieces = [post.text];
+    for(var j=0;j<post.replies.length;j++) pieces.push(post.replies[j].text);
+    var hay = pieces.join('\n').toLowerCase();
+    var terms = q.split(/\s+/);
+    for(var k=0;k<terms.length;k++){
+      if(terms[k] && hay.indexOf(terms[k]) === -1) return false;
+    }
+    return true;
+  }
+
+  function renderReplyForm(postId){
+    return '';
+  }
+
+  function renderThreadComposer(postId){
+    var safeId = escapeHtml(postId);
+    return '<div class="flow-composer-wrap"><span class="flow-dot"></span>' +
+      '<div class="thread-composer" id="thread-composer-' + safeId + '">' +
+      '<textarea placeholder="このアイデアの続きを書く…"></textarea>' +
+      '<div class="reply-form-foot">' +
+      '<button class="small-btn send" type="button" data-action="send-thread-reply" data-id="' + safeId + '">続きを追加</button>' +
+      '</div></div></div>';
+  }
+
+  function renderRootCard(post, inFlow){
+    var id = escapeHtml(post.id);
+    var hasReplies = post.replies.length > 0;
+    var countLabel = hasReplies ? '続き ' + post.replies.length + '件' : '続きなし';
+    if(inFlow){
+      return '<article class="flow-item root-step" data-post-id="' + id + '">' +
+        '<span class="flow-dot"></span>' +
+        '<div class="meta"><span class="kind">IDEA</span><time>' + formatDate(post.createdAt) + '</time></div>' +
+        '<div class="body">' + highlight(post.text) + '</div>' +
+        '<div class="actions">' +
+        '<button class="subtle" type="button" data-action="reply" data-id="' + id + '">続きを書く</button>' +
+        '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-post" data-id="' + id + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+        '<span class="reply-count">' + countLabel + '</span>' +
+        '</div></article>';
+    }
+    return '<article class="card" data-post-id="' + id + '">' +
+      '<div class="meta"><span class="kind">IDEA</span><time>' + formatDate(post.createdAt) + '</time></div>' +
+      '<div class="body">' + highlight(post.text) + '</div>' +
+      '<div class="actions">' +
+      '<button class="subtle" type="button" data-action="reply" data-id="' + id + '">続きを書く</button>' +
+      '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-post" data-id="' + id + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+      '<span class="reply-count">' + countLabel + '</span>' +
+      '</div></article>';
+  }
+
+  function renderReplyCard(reply, postId){
+    return '<article class="flow-item reply-step" data-reply-id="' + escapeHtml(reply.id) + '">' +
+      '<span class="flow-dot"></span>' +
+      '<div class="meta"><span class="kind">CONTINUE</span><time>' + formatDate(reply.createdAt) + '</time></div>' +
+      '<div class="body">' + highlight(reply.text) + '</div>' +
+      '<div class="actions">' +
+      '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-reply" data-post-id="' + escapeHtml(postId) + '" data-reply-id="' + escapeHtml(reply.id) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+      '</div></article>';
+  }
+
+  function renderTimelineReply(reply, post){
+    return '<article class="timeline-reply" data-parent-post-id="' + escapeHtml(post.id) + '">' +
+      '<div class="meta"><span class="kind">CONTINUE</span><time>' + formatDate(reply.createdAt) + '</time></div>' +
+      '<div class="parent-link">元のアイデア：' + highlight(post.text.length > 36 ? post.text.slice(0,36) + '…' : post.text) + '</div>' +
+      '<div class="body">' + highlight(reply.text) + '</div>' +
+      '<div class="actions">' +
+      '<button class="subtle" type="button" data-action="open-thread" data-id="' + escapeHtml(post.id) + '">この流れを見る</button>' +
+      '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-reply" data-post-id="' + escapeHtml(post.id) + '" data-reply-id="' + escapeHtml(reply.id) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+      '</div></article>';
+  }
+
+  function openDeleteModal(kind, postId, replyId){
+    pendingDelete = {kind:kind, postId:postId || '', replyId:replyId || ''};
+    var modal = document.getElementById('deleteModal');
+    var text = document.getElementById('deleteText');
+    if(text) text.textContent = kind === 'post' ? 'この投稿と、紐づいている続きもすべて削除します。' : 'この続きを削除します。';
+    if(modal){ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); }
+  }
+
+  function closeDeleteModal(){
+    pendingDelete = null;
+    var modal = document.getElementById('deleteModal');
+    if(modal){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+  }
+
+  function executeDelete(){
+    if(!pendingDelete) return;
+    var d = pendingDelete;
+    if(d.kind === 'post'){
+      data.posts = data.posts.filter(function(p){ return p.id !== d.postId; });
+      if(focusedPostId === d.postId) focusedPostId = '';
+    }else if(d.kind === 'reply'){
+      for(var p=0;p<data.posts.length;p++){
+        if(data.posts[p].id === d.postId){
+          data.posts[p].replies = data.posts[p].replies.filter(function(r){ return r.id !== d.replyId; });
+          break;
+        }
+      }
+    }
+    pendingDelete = null;
+    var modal = document.getElementById('deleteModal');
+    if(modal){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+    save();
+    render();
+  }
+
+  function render(){
+    try{
+      var posts = data.posts.slice().sort(function(a,b){ return b.createdAt - a.createdAt; }).filter(postMatches);
+
+      if(focusedPostId){
+        var focused = null;
+        for(var f=0;f<data.posts.length;f++){
+          if(data.posts[f].id === focusedPostId){ focused = data.posts[f]; break; }
+        }
+        if(!focused){ focusedPostId = ''; render(); return; }
+
+        els.countText.textContent = '続き ' + focused.replies.length + '件';
+        var focusedHtml = '<div class="focused-head">' +
+          '<button class="back-btn" type="button" data-action="back-list">← 一覧に戻る</button>' +
+          '<span class="focused-note">この投稿の続きだけ表示中</span>' +
+          '</div>';
+        focusedHtml += '<div class="thread flow-thread">' + renderRootCard(focused, true);
+        var focusedReplies = focused.replies.slice().sort(function(a,b){ return a.createdAt - b.createdAt; });
+        for(var fr=0;fr<focusedReplies.length;fr++) focusedHtml += renderReplyCard(focusedReplies[fr], focused.id);
+        focusedHtml += renderThreadComposer(focused.id) + '</div>';
+        els.timeline.innerHTML = focusedHtml;
+        return;
+      }
+
+      els.countText.textContent = posts.length + '件';
+      if(!posts.length){
+        els.timeline.innerHTML = '<div class="empty">' + (query ? '該当する投稿がありません' : 'まだ投稿がありません。最初のひらめきを書いてみましょう。') + '</div>';
+        return;
+      }
+
+      var html = '';
+      if(view === 'roots'){
+        for(var i=0;i<posts.length;i++){
+          html += '<div class="thread">' + renderRootCard(posts[i], false) + '</div>';
+        }
+        els.countText.textContent = posts.length + '件';
+      }else{
+        var items = [];
+        for(var i=0;i<data.posts.length;i++){
+          var post = data.posts[i];
+          if(!query || itemMatches(post)) items.push({type:'post', createdAt:post.createdAt, post:post});
+          for(var j=0;j<post.replies.length;j++){
+            var reply = post.replies[j];
+            if(!query || itemMatches(reply)) items.push({type:'reply', createdAt:reply.createdAt, post:post, reply:reply});
+          }
+        }
+        items.sort(function(a,b){ return b.createdAt - a.createdAt; });
+        els.countText.textContent = items.length + '件';
+        if(!items.length){
+          els.timeline.innerHTML = '<div class="empty">該当する投稿がありません</div>';
+          return;
+        }
+        for(var k=0;k<items.length;k++){
+          var item = items[k];
+          if(item.type === 'post') html += '<div class="thread">' + renderRootCard(item.post, false) + '</div>';
+          else html += renderTimelineReply(item.reply, item.post);
+        }
+      }
+      els.timeline.innerHTML = html;
+    }catch(e){
+      console.error('render error:', e);
+      els.timeline.innerHTML = '<div class="empty">表示処理でエラーが発生しました。ページを再読み込みしてください。</div>';
+    }
+  }
+
+  function addPost(){
+    var text = els.postText.value.trim();
+    if(!text) return;
+    data.posts.push({ id:uid(), text:text, tags:[], createdAt:Date.now(), replies:[] });
+    els.postText.value = '';
+    save();
+    render();
+  }
+
+  function addReply(postId, form){
+    if(!form) return;
+    var textarea = form.querySelector('textarea');
+    if(!textarea) return;
+    var text = textarea.value.trim();
+    if(!text) return;
+
+    var post = null;
+    for(var i=0;i<data.posts.length;i++) if(data.posts[i].id === postId){ post = data.posts[i]; break; }
+    if(!post) return;
+
+    post.replies.push({ id:uid(), text:text, tags:[], createdAt:Date.now() });
+    focusedPostId = postId;
+    save();
+    render();
+
+    setTimeout(function(){
+      var f = document.getElementById('thread-composer-' + postId);
+      if(f){
+        f.scrollIntoView({behavior:'smooth', block:'end'});
+        var ta=f.querySelector('textarea');
+        if(ta) ta.focus();
+      }
+    },0);
+  }
+
+
+  function exportData(){
+    try{
+      var payload = {
+        app:'hirameki-log',
+        version:1,
+        exportedAt:new Date().toISOString(),
+        data:data
+      };
+      var json = JSON.stringify(payload, null, 2);
+      var blob = new Blob([json], {type:'application/json'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      var d = new Date();
+      var pad = function(n){ return String(n).padStart(2,'0'); };
+      a.href = url;
+      a.download = 'hirameki-log_' + d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + '_' + pad(d.getHours()) + pad(d.getMinutes()) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 0);
+    }catch(e){
+      console.error('export error:', e);
+      alert('JSONの書き出しに失敗しました。');
+    }
+  }
+
+  function importDataFile(file){
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var parsed = JSON.parse(String(reader.result || ''));
+        var candidate = parsed && parsed.data ? parsed.data : parsed;
+        var normalized = normalizeData(candidate);
+        if(!candidate || !Array.isArray(candidate.posts)) throw new Error('invalid format');
+        if(!window.confirm('現在のデータを、選択したJSONの内容で置き換えますか？')) return;
+        data = normalized;
+        expandedPosts = {};
+        save();
+        render();
+        alert('JSONからデータを復元しました。');
+      }catch(e){
+        console.error('import error:', e);
+        alert('このJSONファイルは読み込めませんでした。');
+      }finally{
+        els.importJsonFile.value = '';
+      }
+    };
+    reader.onerror = function(){
+      alert('JSONファイルの読み込みに失敗しました。');
+      els.importJsonFile.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  function closest(el, selector){
+    while(el && el !== document){
+      if(el.matches && el.matches(selector)) return el;
+      el = el.parentNode;
+    }
+    return null;
+  }
+
+  els.postButton.addEventListener('click', addPost, false);
+
+  els.postText.addEventListener('keydown', function(e){
+    if((e.ctrlKey || e.metaKey) && e.key === 'Enter') addPost();
+  }, false);
+
+  els.searchInput.addEventListener('input', function(){ query = els.searchInput.value; render(); }, false);
+
+  els.clearSearch.addEventListener('click', function(){
+    els.searchInput.value = '';
+    query = '';
+    render();
+  }, false);
+
+
+  function setMenuOpen(open){
+    if(!els.appMenu || !els.menuButton) return;
+    els.appMenu.classList.toggle('open', !!open);
+    els.appMenu.setAttribute('aria-hidden', open ? 'false' : 'true');
+    els.menuButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  els.menuButton.addEventListener('click', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    setMenuOpen(!els.appMenu.classList.contains('open'));
+  }, false);
+
+  els.exportJson.addEventListener('click', function(){
+    setMenuOpen(false);
+    exportData();
+  }, false);
+
+  els.importJsonBtn.addEventListener('click', function(){
+    setMenuOpen(false);
+    els.importJsonFile.click();
+  }, false);
+
+  els.importJsonFile.addEventListener('change', function(){
+    importDataFile(els.importJsonFile.files && els.importJsonFile.files[0]);
+  }, false);
+
+  document.addEventListener('click', function(e){
+    if(els.appMenu && els.appMenu.classList.contains('open') && !closest(e.target, '#appMenu') && !closest(e.target, '#menuButton')) setMenuOpen(false);
+    var viewBtn = closest(e.target, '[data-view]');
+    if(viewBtn){
+      view = viewBtn.getAttribute('data-view') || 'roots';
+      var allViews = document.querySelectorAll('[data-view]');
+      for(var i=0;i<allViews.length;i++) allViews[i].classList.toggle('active', allViews[i] === viewBtn);
+      render();
+      return;
+    }
+
+
+    var btn = closest(e.target, '[data-action]');
+    if(btn){
+      e.preventDefault();
+      e.stopPropagation();
+      var action = btn.getAttribute('data-action');
+      var id = btn.getAttribute('data-id') || '';
+      var form;
+
+      if(action === 'reply'){
+        focusedPostId = id;
+        render();
+        setTimeout(function(){
+          form = document.getElementById('thread-composer-' + id);
+          if(form){ form.scrollIntoView({behavior:'smooth', block:'end'}); var ta=form.querySelector('textarea'); if(ta) ta.focus(); }
+        },0);
+        return;
+      }
+
+      if(action === 'back-list'){
+        focusedPostId = '';
+        render();
+        return;
+      }
+
+      if(action === 'send-thread-reply'){
+        form = document.getElementById('thread-composer-' + id);
+        addReply(id, form);
+        return;
+      }
+
+
+      if(action === 'open-thread'){
+        focusedPostId = id;
+        render();
+        window.scrollTo({top:0, behavior:'smooth'});
+        return;
+      }
+
+      if(action === 'delete-post'){
+        openDeleteModal('post', id, '');
+        return;
+      }
+
+      if(action === 'delete-reply'){
+        openDeleteModal('reply', btn.getAttribute('data-post-id') || '', btn.getAttribute('data-reply-id') || '');
+        return;
+      }
+
+      if(action === 'cancel-delete'){
+        closeDeleteModal();
+        return;
+      }
+
+      if(action === 'confirm-delete'){
+        executeDelete();
+        return;
+      }
+      return;
+    }
+
+    var modal = document.getElementById('deleteModal');
+    if(modal && e.target === modal){ closeDeleteModal(); return; }
+
+    var rootCard = closest(e.target, '.card[data-post-id]');
+    if(rootCard && !focusedPostId){
+      var pid = rootCard.getAttribute('data-post-id');
+      if(pid){
+        focusedPostId = pid;
+        render();
+        window.scrollTo({top:0, behavior:'smooth'});
+      }
+    }
+  }, false);
+
+  els.timeline.addEventListener('keydown', function(e){
+    if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){
+      var form = closest(e.target, '.thread-composer');
+      if(form){
+        var postId = form.id.replace('thread-composer-','');
+        addReply(postId, form);
+      }
+    }
+  }, false);
+
+  render();
+})();
+</script>
+</body>
+</html>
