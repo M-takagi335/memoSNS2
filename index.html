@@ -149,6 +149,16 @@
     .reply-form-foot{display:flex;justify-content:flex-end;gap:7px;margin-top:8px}
     .small-btn{border:1px solid var(--line);background:white;color:#596477;border-radius:11px;padding:8px 12px;font-size:12px;font-weight:800}
     .small-btn.send{border-color:var(--accent);background:var(--accent);color:white}
+    .edit-modal{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(23,32,51,.34);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+    .edit-modal.open{display:flex}
+    .edit-box{width:min(520px,100%);background:#fff;border-radius:22px;padding:18px;box-shadow:0 20px 60px rgba(23,32,51,.22);border:1px solid var(--line)}
+    .edit-title{font-size:17px;font-weight:850;margin-bottom:10px}
+    .edit-textarea{display:block;width:100%;min-height:150px;resize:vertical;border:1px solid var(--line);border-radius:15px;padding:12px 13px;outline:none;color:var(--text);background:#fff;font-size:16px;line-height:1.65}
+    .edit-textarea:focus{border-color:#bbc3ff;box-shadow:0 0 0 4px rgba(91,108,249,.10)}
+    .edit-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:12px}
+    .edit-cancel,.edit-save{border:0;border-radius:12px;padding:10px 14px;font-weight:800}
+    .edit-cancel{background:#f1f3f7;color:#596477}
+    .edit-save{background:var(--accent);color:#fff}
     mark{background:#fff1a8;color:inherit;border-radius:3px;padding:0 1px}
     .footer{text-align:center;color:#a2aaba;font-size:11px;padding:26px 0 8px}
     .timeline-reply{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:22px;padding:15px;box-shadow:var(--shadow-soft);margin-bottom:18px}
@@ -258,6 +268,16 @@
       </div>
     </div>
   </div>
+  <div class="edit-modal" id="editModal" aria-hidden="true">
+    <div class="edit-box" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+      <div class="edit-title" id="editTitle">投稿を編集</div>
+      <textarea class="edit-textarea" id="editTextarea"></textarea>
+      <div class="edit-actions">
+        <button class="edit-cancel" type="button" data-action="cancel-edit">キャンセル</button>
+        <button class="edit-save" type="button" data-action="save-edit">保存する</button>
+      </div>
+    </div>
+  </div>
 
 <script>
 (function(){
@@ -287,6 +307,7 @@
   var focusedPostId = '';
   var data = load();
   var pendingDelete = null;
+  var pendingEdit = null;
 
   function asText(value){
     return value == null ? '' : String(value);
@@ -460,6 +481,7 @@
         '<div class="body">' + highlight(post.text) + '</div>' +
         '<div class="actions">' +
         '<button class="subtle" type="button" data-action="reply" data-id="' + id + '">続きを書く</button>' +
+        '<button class="subtle" type="button" data-action="edit-post" data-id="' + id + '">編集</button>' +
         '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-post" data-id="' + id + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
         '<span class="reply-count">' + countLabel + '</span>' +
         '</div></article>';
@@ -469,6 +491,7 @@
       '<div class="body">' + highlight(post.text) + '</div>' +
       '<div class="actions">' +
       '<button class="subtle" type="button" data-action="reply" data-id="' + id + '">続きを書く</button>' +
+      '<button class="subtle" type="button" data-action="edit-post" data-id="' + id + '">編集</button>' +
       '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-post" data-id="' + id + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
       '<span class="reply-count">' + countLabel + '</span>' +
       '</div></article>';
@@ -480,6 +503,7 @@
       '<div class="meta"><span class="kind">CONTINUE</span><time>' + formatDate(reply.createdAt) + '</time></div>' +
       '<div class="body">' + highlight(reply.text) + '</div>' +
       '<div class="actions">' +
+      '<button class="subtle" type="button" data-action="edit-reply" data-post-id="' + escapeHtml(postId) + '" data-reply-id="' + escapeHtml(reply.id) + '">編集</button>' +
       '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-reply" data-post-id="' + escapeHtml(postId) + '" data-reply-id="' + escapeHtml(reply.id) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
       '</div></article>';
   }
@@ -491,8 +515,65 @@
       '<div class="body">' + highlight(reply.text) + '</div>' +
       '<div class="actions">' +
       '<button class="subtle" type="button" data-action="open-thread" data-id="' + escapeHtml(post.id) + '">この流れを見る</button>' +
+      '<button class="subtle" type="button" data-action="edit-reply" data-post-id="' + escapeHtml(post.id) + '" data-reply-id="' + escapeHtml(reply.id) + '">編集</button>' +
       '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-reply" data-post-id="' + escapeHtml(post.id) + '" data-reply-id="' + escapeHtml(reply.id) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
       '</div></article>';
+  }
+
+
+  function openEditModal(kind, postId, replyId){
+    var text = '';
+    if(kind === 'post'){
+      for(var i=0;i<data.posts.length;i++){
+        if(data.posts[i].id === postId){ text = data.posts[i].text; break; }
+      }
+    }else{
+      for(var p=0;p<data.posts.length;p++){
+        if(data.posts[p].id !== postId) continue;
+        for(var r=0;r<data.posts[p].replies.length;r++){
+          if(data.posts[p].replies[r].id === replyId){ text = data.posts[p].replies[r].text; break; }
+        }
+      }
+    }
+    pendingEdit = {kind:kind, postId:postId || '', replyId:replyId || ''};
+    var modal = document.getElementById('editModal');
+    var title = document.getElementById('editTitle');
+    var textarea = document.getElementById('editTextarea');
+    if(title) title.textContent = kind === 'post' ? '投稿を編集' : '続きを編集';
+    if(textarea) textarea.value = text;
+    if(modal){ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); }
+    setTimeout(function(){ if(textarea){ textarea.focus(); textarea.setSelectionRange(textarea.value.length, textarea.value.length); } },0);
+  }
+
+  function closeEditModal(){
+    pendingEdit = null;
+    var modal = document.getElementById('editModal');
+    if(modal){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+  }
+
+  function saveEdit(){
+    if(!pendingEdit) return;
+    var textarea = document.getElementById('editTextarea');
+    var text = textarea ? textarea.value.trim() : '';
+    if(!text){
+      alert('本文を入力してください。');
+      return;
+    }
+    if(pendingEdit.kind === 'post'){
+      for(var i=0;i<data.posts.length;i++){
+        if(data.posts[i].id === pendingEdit.postId){ data.posts[i].text = text; break; }
+      }
+    }else{
+      for(var p=0;p<data.posts.length;p++){
+        if(data.posts[p].id !== pendingEdit.postId) continue;
+        for(var r=0;r<data.posts[p].replies.length;r++){
+          if(data.posts[p].replies[r].id === pendingEdit.replyId){ data.posts[p].replies[r].text = text; break; }
+        }
+      }
+    }
+    closeEditModal();
+    save();
+    render();
   }
 
   function openDeleteModal(kind, postId, replyId){
@@ -786,6 +867,26 @@
         return;
       }
 
+      if(action === 'edit-post'){
+        openEditModal('post', id, '');
+        return;
+      }
+
+      if(action === 'edit-reply'){
+        openEditModal('reply', btn.getAttribute('data-post-id') || '', btn.getAttribute('data-reply-id') || '');
+        return;
+      }
+
+      if(action === 'cancel-edit'){
+        closeEditModal();
+        return;
+      }
+
+      if(action === 'save-edit'){
+        saveEdit();
+        return;
+      }
+
       if(action === 'delete-post'){
         openDeleteModal('post', id, '');
         return;
@@ -808,6 +909,8 @@
       return;
     }
 
+    var editModal = document.getElementById('editModal');
+    if(editModal && e.target === editModal){ closeEditModal(); return; }
     var modal = document.getElementById('deleteModal');
     if(modal && e.target === modal){ closeDeleteModal(); return; }
 
@@ -820,6 +923,10 @@
         window.scrollTo({top:0, behavior:'smooth'});
       }
     }
+  }, false);
+
+  document.getElementById('editTextarea').addEventListener('keydown', function(e){
+    if((e.ctrlKey || e.metaKey) && e.key === 'Enter') saveEdit();
   }, false);
 
   els.timeline.addEventListener('keydown', function(e){
