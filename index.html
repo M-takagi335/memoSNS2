@@ -123,6 +123,10 @@
     .focused-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px}
     .back-btn{border:1px solid var(--line);background:white;color:#596477;border-radius:12px;padding:9px 13px;font-size:13px;font-weight:800;box-shadow:var(--shadow-soft)}
     .focused-note{font-size:12px;color:var(--muted)}
+    .focused-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .copy-thread-btn{border:1px solid var(--line);background:white;color:#596477;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:800;box-shadow:var(--shadow-soft);display:inline-flex;align-items:center;gap:6px}
+    .copy-thread-btn:hover,.copy-thread-btn:active{background:#f5f7fb}
+    .copy-thread-btn.copied{color:var(--accent);border-color:#cfd4ff;background:#f7f8ff}
     .thread-composer{display:block;margin:12px 0 0;background:#fff;border:1px solid #dfe4ee;border-radius:20px;padding:13px;box-shadow:var(--shadow-soft)}
     .thread-composer textarea{width:100%;min-height:92px;resize:vertical;border:0;outline:0;background:transparent;font-size:16px;line-height:1.6;color:var(--text)}
     .card{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:22px;padding:15px;box-shadow:var(--shadow-soft)}
@@ -644,8 +648,10 @@
         els.countText.textContent = '続き ' + focused.replies.length + '件';
         var focusedHtml = '<div class="focused-head">' +
           '<button class="back-btn" type="button" data-action="back-list">← 一覧に戻る</button>' +
+          '<div class="focused-actions">' +
           '<span class="focused-note">この投稿の続きだけ表示中</span>' +
-          '</div>';
+          '<button class="copy-thread-btn" type="button" data-action="copy-thread" data-id="' + escapeHtml(focused.id) + '">まとめてコピー</button>' +
+          '</div></div>';
         focusedHtml += '<div class="thread flow-thread">' + renderRootCard(focused, true);
         var focusedReplies = focused.replies.slice().sort(function(a,b){ return a.createdAt - b.createdAt; });
         for(var fr=0;fr<focusedReplies.length;fr++) focusedHtml += renderReplyCard(focusedReplies[fr], focused.id);
@@ -749,6 +755,68 @@
         if(ta) ta.focus();
       }
     },0);
+  }
+
+
+  function buildThreadText(post){
+    if(!post) return '';
+    var parts = [];
+    if(asText(post.text).trim()) parts.push(asText(post.text).trim());
+    var replies = post.replies.slice().sort(function(a,b){ return a.createdAt - b.createdAt; });
+    for(var i=0;i<replies.length;i++){
+      var t = asText(replies[i].text).trim();
+      if(t) parts.push(t);
+    }
+    return parts.join('\n\n');
+  }
+
+  function fallbackCopyText(text){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly','');
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    ta.style.top = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    var ok = false;
+    try{ ok = document.execCommand('copy'); }catch(e){ ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  function copyThread(postId, button){
+    var post = null;
+    for(var i=0;i<data.posts.length;i++){
+      if(data.posts[i].id === postId){ post = data.posts[i]; break; }
+    }
+    if(!post) return;
+    var text = buildThreadText(post);
+    if(!text) return;
+
+    function done(){
+      if(!button) return;
+      var original = button.textContent;
+      button.textContent = 'コピーしました';
+      button.classList.add('copied');
+      setTimeout(function(){
+        if(document.body.contains(button)){
+          button.textContent = original;
+          button.classList.remove('copied');
+        }
+      }, 1400);
+    }
+
+    if(navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(text).then(done).catch(function(){
+        if(fallbackCopyText(text)) done();
+        else alert('コピーできませんでした。');
+      });
+    }else{
+      if(fallbackCopyText(text)) done();
+      else alert('コピーできませんでした。');
+    }
   }
 
 
@@ -890,6 +958,11 @@
       if(action === 'back-list'){
         focusedPostId = '';
         render();
+        return;
+      }
+
+      if(action === 'copy-thread'){
+        copyThread(id, btn);
         return;
       }
 
