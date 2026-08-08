@@ -121,10 +121,10 @@
     .flow-composer-wrap:before{content:"";position:absolute;left:20px;top:0;height:29px;width:2px;background:#dfe4ff}
     .flow-composer-wrap .flow-dot{top:22px;background:#fff;border:3px solid var(--accent);box-shadow:0 0 0 2px #dfe4ff}
     .focused-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px}
-    .back-btn{border:1px solid var(--line);background:white;color:#596477;border-radius:12px;padding:9px 13px;font-size:13px;font-weight:800;box-shadow:var(--shadow-soft)}
+    .back-btn{border:1px solid var(--line);background:white;color:#596477;border-radius:12px;padding:0 13px;height:38px;line-height:1;font-size:13px;font-weight:800;box-shadow:var(--shadow-soft);white-space:nowrap;flex:none;display:inline-flex;align-items:center;justify-content:center}
     .focused-note{font-size:12px;color:var(--muted)}
-    .focused-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-    .copy-thread-btn{border:1px solid var(--line);background:white;color:#596477;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:800;box-shadow:var(--shadow-soft);display:inline-flex;align-items:center;gap:6px}
+    .focused-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;justify-content:flex-end}
+    .copy-thread-btn{border:1px solid var(--line);background:white;color:#596477;border-radius:12px;padding:0 12px;height:38px;line-height:1;font-size:13px;font-weight:800;box-shadow:var(--shadow-soft);display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;flex:none}
     .copy-thread-btn:hover,.copy-thread-btn:active{background:#f5f7fb}
     .copy-thread-btn.copied{color:var(--accent);border-color:#cfd4ff;background:#f7f8ff}
     .thread-composer{display:block;margin:12px 0 0;background:#fff;border:1px solid #dfe4ee;border-radius:20px;padding:13px;box-shadow:var(--shadow-soft)}
@@ -199,6 +199,7 @@
       .card{border-radius:19px;padding:14px}
       .body{font-size:16px}
       .search input{font-size:16px}
+      .focused-note{display:none}
     }
   </style>
 </head>
