@@ -124,6 +124,8 @@
     .back-btn{border:1px solid var(--line);background:white;color:#596477;border-radius:12px;padding:0 13px;height:38px;line-height:1;font-size:13px;font-weight:800;box-shadow:var(--shadow-soft);white-space:nowrap;flex:none;display:inline-flex;align-items:center;justify-content:center}
     .focused-note{font-size:12px;color:var(--muted)}
     .focused-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;justify-content:flex-end}
+    .focused-bottom-back{display:flex;justify-content:center;padding:12px 0 8px}
+    .focused-bottom-back .back-btn{width:100%;max-width:260px}
     .copy-thread-btn{border:1px solid var(--line);background:white;color:#596477;border-radius:12px;padding:0 12px;height:38px;line-height:1;font-size:13px;font-weight:800;box-shadow:var(--shadow-soft);display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;flex:none}
     .copy-thread-btn:hover,.copy-thread-btn:active{background:#f5f7fb}
     .copy-thread-btn.copied{color:var(--accent);border-color:#cfd4ff;background:#f7f8ff}
@@ -656,7 +658,9 @@
         focusedHtml += '<div class="thread flow-thread">' + renderRootCard(focused, true);
         var focusedReplies = focused.replies.slice().sort(function(a,b){ return a.createdAt - b.createdAt; });
         for(var fr=0;fr<focusedReplies.length;fr++) focusedHtml += renderReplyCard(focusedReplies[fr], focused.id);
-        focusedHtml += renderThreadComposer(focused.id) + '</div>';
+        focusedHtml += renderThreadComposer(focused.id);
+        focusedHtml += '</div>';
+        focusedHtml += '<div class="focused-bottom-back"><button class="back-btn" type="button" data-action="back-list">← 一覧に戻る</button></div>';
         els.timeline.innerHTML = focusedHtml;
         return;
       }
