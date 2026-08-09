@@ -961,8 +961,18 @@
       }
 
       if(action === 'back-list'){
+        var returnPostId = focusedPostId;
         focusedPostId = '';
         render();
+        setTimeout(function(){
+          var target = returnPostId ? document.querySelector('.card[data-post-id="' + CSS.escape(returnPostId) + '"]') : null;
+          if(target){
+            var topbar = document.querySelector('.topbar');
+            var offset = topbar ? topbar.getBoundingClientRect().height + 12 : 12;
+            var y = target.getBoundingClientRect().top + window.pageYOffset - offset;
+            window.scrollTo({top:Math.max(0, y), behavior:'smooth'});
+          }
+        }, 0);
         return;
       }
 
