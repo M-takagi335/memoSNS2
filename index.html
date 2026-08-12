@@ -103,6 +103,12 @@
     .seg{display:inline-flex;padding:4px;border-radius:15px;background:#e9edf5;gap:4px;flex:none}
     .seg button{border:0;background:transparent;padding:8px 12px;border-radius:11px;color:#657086;font-size:13px;font-weight:800;white-space:nowrap}
     .seg button.active{background:white;color:var(--text);box-shadow:0 2px 7px rgba(32,43,67,.10)}
+    .shuffle-btn{border:1px solid var(--line);background:white;color:#596477;padding:8px 12px;border-radius:11px;font-size:13px;font-weight:800;white-space:nowrap;box-shadow:var(--shadow-soft);flex:none}
+    .shuffle-btn:hover,.shuffle-btn:active{background:#f4f6fa}
+    .shuffle-btn[hidden]{display:none}
+    .seg .shuffle-btn{background:#f7f8ff;color:var(--accent);border:1px solid #d9ddff;padding:8px 11px}
+    .seg .shuffle-btn:hover,.seg .shuffle-btn:active{background:#eef0ff}
+    .seg .shuffle-btn.active{background:white;color:var(--text);border-color:transparent;box-shadow:0 2px 7px rgba(32,43,67,.10)}
 
     .empty{color:var(--muted);text-align:center;padding:58px 18px;font-size:14px;background:rgba(255,255,255,.62);border:1px dashed #dfe4ee;border-radius:22px}
     .thread{margin-bottom:18px}
@@ -261,6 +267,8 @@
       <div class="toolbar">
         <div class="seg" aria-label="タイムライン表示切替">
           <button type="button" data-view="roots" class="active">投稿だけ</button>
+          <button id="dateOrderButton" class="shuffle-btn active" type="button" aria-label="投稿日順に並べる">投稿日順</button>
+          <button id="shuffleButton" class="shuffle-btn" type="button" aria-label="投稿をシャッフル">↻ シャッフル</button>
           <button type="button" data-view="threads">続きを表示</button>
           <button type="button" data-view="bookmarks">ブックマーク</button>
         </div>
@@ -310,7 +318,9 @@
     appMenu: $('appMenu'),
     exportJson: $('exportJson'),
     importJsonBtn: $('importJsonBtn'),
-    importJsonFile: $('importJsonFile')
+    importJsonFile: $('importJsonFile'),
+    dateOrderButton: $('dateOrderButton'),
+    shuffleButton: $('shuffleButton')
   };
 
   var view = 'roots';
@@ -320,6 +330,31 @@
   var data = load();
   var pendingDelete = null;
   var pendingEdit = null;
+  var shuffledRootIds = null;
+
+  function shuffledCopy(items){
+    var out = items.slice();
+    for(var i=out.length-1;i>0;i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = out[i];
+      out[i] = out[j];
+      out[j] = tmp;
+    }
+    return out;
+  }
+
+  function showRootsByDate(){
+    if(view !== 'roots' || focusedPostId) return;
+    shuffledRootIds = null;
+    render();
+  }
+
+  function shuffleRoots(){
+    if(view !== 'roots' || focusedPostId) return;
+    var matching = data.posts.slice().filter(postMatches);
+    shuffledRootIds = shuffledCopy(matching.map(function(p){ return p.id; }));
+    render();
+  }
 
   function asText(value){
     return value == null ? '' : String(value);
@@ -641,6 +676,15 @@
     try{
       var posts = data.posts.slice().sort(function(a,b){ return b.createdAt - a.createdAt; }).filter(postMatches);
 
+      if(els.dateOrderButton){
+        els.dateOrderButton.hidden = view !== 'roots' || !!focusedPostId;
+        els.dateOrderButton.classList.toggle('active', view === 'roots' && !focusedPostId && !shuffledRootIds);
+      }
+      if(els.shuffleButton){
+        els.shuffleButton.hidden = view !== 'roots' || !!focusedPostId;
+        els.shuffleButton.classList.toggle('active', view === 'roots' && !focusedPostId && !!shuffledRootIds);
+      }
+
       if(focusedPostId){
         var focused = null;
         for(var f=0;f<data.posts.length;f++){
@@ -673,6 +717,14 @@
 
       var html = '';
       if(view === 'roots'){
+        if(shuffledRootIds && shuffledRootIds.length){
+          var byId = {};
+          for(var si=0;si<posts.length;si++) byId[posts[si].id] = posts[si];
+          var shuffledPosts = [];
+          for(var so=0;so<shuffledRootIds.length;so++) if(byId[shuffledRootIds[so]]) shuffledPosts.push(byId[shuffledRootIds[so]]);
+          for(var sn=0;sn<posts.length;sn++) if(shuffledRootIds.indexOf(posts[sn].id) === -1) shuffledPosts.push(posts[sn]);
+          posts = shuffledPosts;
+        }
         for(var i=0;i<posts.length;i++){
           html += '<div class="thread">' + renderRootCard(posts[i], false) + '</div>';
         }
@@ -731,6 +783,7 @@
     var text = els.postText.value.trim();
     if(!text) return;
     data.posts.push({ id:uid(), text:text, tags:[], createdAt:Date.now(), bookmarked:false, replies:[] });
+    shuffledRootIds = null;
     els.postText.value = '';
     save();
     render();
@@ -889,16 +942,19 @@
   }
 
   els.postButton.addEventListener('click', addPost, false);
+  if(els.dateOrderButton) els.dateOrderButton.addEventListener('click', showRootsByDate, false);
+  if(els.shuffleButton) els.shuffleButton.addEventListener('click', shuffleRoots, false);
 
   els.postText.addEventListener('keydown', function(e){
     if((e.ctrlKey || e.metaKey) && e.key === 'Enter') addPost();
   }, false);
 
-  els.searchInput.addEventListener('input', function(){ query = els.searchInput.value; render(); }, false);
+  els.searchInput.addEventListener('input', function(){ query = els.searchInput.value; shuffledRootIds = null; render(); }, false);
 
   els.clearSearch.addEventListener('click', function(){
     els.searchInput.value = '';
     query = '';
+    shuffledRootIds = null;
     render();
   }, false);
 
@@ -935,6 +991,7 @@
     var viewBtn = closest(e.target, '[data-view]');
     if(viewBtn){
       view = viewBtn.getAttribute('data-view') || 'roots';
+      if(view !== 'roots') shuffledRootIds = null;
       var allViews = document.querySelectorAll('[data-view]');
       for(var i=0;i<allViews.length;i++) allViews[i].classList.toggle('active', allViews[i] === viewBtn);
       render();
