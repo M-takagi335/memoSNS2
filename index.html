@@ -63,6 +63,9 @@
     .top-actions{display:flex;align-items:center;gap:8px;position:relative}
     .menu-btn{width:36px;height:36px;border:1px solid var(--line);background:rgba(255,255,255,.92);border-radius:11px;display:grid;place-items:center;padding:0;box-shadow:var(--shadow-soft);color:#69748a}
     .menu-btn svg{width:19px;height:19px;display:block}
+    .top-btn{width:36px;height:36px;border:1px solid var(--line);background:rgba(255,255,255,.92);border-radius:11px;display:grid;place-items:center;padding:0;box-shadow:var(--shadow-soft);color:#69748a;flex:none}
+    .top-btn:hover,.top-btn:active{background:#f4f6fa}
+    .top-btn svg{width:18px;height:18px;display:block;pointer-events:none}
     .app-menu{position:absolute;right:0;top:44px;width:210px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:7px;box-shadow:0 16px 42px rgba(35,48,76,.16);display:none;z-index:80}
     .app-menu.open{display:block}
     .menu-item{width:100%;border:0;background:transparent;color:#465167;text-align:left;border-radius:11px;padding:11px 12px;font-size:13px;font-weight:750;display:flex;align-items:center;gap:9px}
@@ -151,6 +154,10 @@
     .subtle{border:0;background:transparent;color:#646f83;padding:7px 8px;border-radius:10px;font-size:12px;font-weight:800}
     .subtle:hover{background:#f4f6fa}
     .subtle.danger{color:var(--danger)}
+    .copy-item-btn{width:30px;height:30px;border:0;background:transparent;border-radius:9px;padding:5px;color:#a5adbb;display:grid;place-items:center;flex:none}
+    .copy-item-btn:hover,.copy-item-btn:active{background:#f7f8fa;color:#69748a}
+    .copy-item-btn.copied{color:var(--accent);background:#f3f4ff}
+    .copy-item-btn svg{width:17px;height:17px;display:block;pointer-events:none}
     .bookmark-btn{width:30px;height:30px;border:0;background:transparent;border-radius:9px;padding:5px;color:#a5adbb;display:grid;place-items:center;flex:none}
     .bookmark-btn:hover,.bookmark-btn:active{background:#f7f8fa;color:#9299aa}
     .bookmark-btn.active{color:#8f97aa;background:#f5f6f9}
@@ -220,6 +227,9 @@
           <div class="brand">ひらめきログ</div>
         </div>
         <div class="top-actions">
+          <button id="scrollTopButton" class="top-btn" type="button" aria-label="一番上に戻る" title="一番上に戻る">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11l6-6 6 6M12 5v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
           <div class="count" id="countText">0件</div>
           <button id="menuButton" class="menu-btn" type="button" aria-label="メニュー" aria-expanded="false">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -320,7 +330,8 @@
     importJsonBtn: $('importJsonBtn'),
     importJsonFile: $('importJsonFile'),
     dateOrderButton: $('dateOrderButton'),
-    shuffleButton: $('shuffleButton')
+    shuffleButton: $('shuffleButton'),
+    scrollTopButton: $('scrollTopButton')
   };
 
   var view = 'roots';
@@ -519,6 +530,13 @@
       '</div></div></div>';
   }
 
+  function copyItemButtonHtml(kind, postId, replyId){
+    var attrs = kind === 'post'
+      ? ' data-id="' + escapeHtml(postId) + '"'
+      : ' data-post-id="' + escapeHtml(postId) + '" data-reply-id="' + escapeHtml(replyId) + '"';
+    return '<button class="copy-item-btn" type="button" aria-label="コピー" title="コピー" data-action="copy-' + kind + '"' + attrs + '><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>';
+  }
+
   function bookmarkButtonHtml(active, kind, postId, replyId){
     var action = kind === 'post' ? 'toggle-bookmark-post' : 'toggle-bookmark-reply';
     var attrs = kind === 'post'
@@ -539,6 +557,7 @@
         '<div class="actions">' +
         '<button class="subtle" type="button" data-action="reply" data-id="' + id + '">続きを書く</button>' +
         '<button class="subtle" type="button" data-action="edit-post" data-id="' + id + '">編集</button>' +
+        copyItemButtonHtml('post', post.id, '') +
         bookmarkButtonHtml(post.bookmarked, 'post', post.id, '') +
         '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-post" data-id="' + id + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
         '<span class="reply-count">' + countLabel + '</span>' +
@@ -550,6 +569,7 @@
       '<div class="actions">' +
       '<button class="subtle" type="button" data-action="reply" data-id="' + id + '">続きを書く</button>' +
       '<button class="subtle" type="button" data-action="edit-post" data-id="' + id + '">編集</button>' +
+      copyItemButtonHtml('post', post.id, '') +
       bookmarkButtonHtml(post.bookmarked, 'post', post.id, '') +
       '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-post" data-id="' + id + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
       '<span class="reply-count">' + countLabel + '</span>' +
@@ -563,6 +583,7 @@
       '<div class="body">' + highlight(reply.text) + '</div>' +
       '<div class="actions">' +
       '<button class="subtle" type="button" data-action="edit-reply" data-post-id="' + escapeHtml(postId) + '" data-reply-id="' + escapeHtml(reply.id) + '">編集</button>' +
+      copyItemButtonHtml('reply', postId, reply.id) +
       bookmarkButtonHtml(reply.bookmarked, 'reply', postId, reply.id) +
       '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-reply" data-post-id="' + escapeHtml(postId) + '" data-reply-id="' + escapeHtml(reply.id) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
       '</div></article>';
@@ -576,6 +597,7 @@
       '<div class="actions">' +
       '<button class="subtle" type="button" data-action="open-thread" data-id="' + escapeHtml(post.id) + '">この流れを見る</button>' +
       '<button class="subtle" type="button" data-action="edit-reply" data-post-id="' + escapeHtml(post.id) + '" data-reply-id="' + escapeHtml(reply.id) + '">編集</button>' +
+      copyItemButtonHtml('reply', post.id, reply.id) +
       bookmarkButtonHtml(reply.bookmarked, 'reply', post.id, reply.id) +
       '<button class="trash-btn" type="button" aria-label="削除" title="削除" data-action="delete-reply" data-post-id="' + escapeHtml(post.id) + '" data-reply-id="' + escapeHtml(reply.id) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
       '</div></article>';
@@ -844,6 +866,51 @@
     return ok;
   }
 
+  function copyPlainText(text, button){
+    text = asText(text).trim();
+    if(!text) return;
+
+    function done(){
+      if(!button) return;
+      var original = button.innerHTML;
+      button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      button.classList.add('copied');
+      button.setAttribute('aria-label','コピーしました');
+      setTimeout(function(){
+        if(document.body.contains(button)){
+          button.innerHTML = original;
+          button.classList.remove('copied');
+          button.setAttribute('aria-label','コピー');
+        }
+      }, 1200);
+    }
+
+    if(navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(text).then(done).catch(function(){
+        if(fallbackCopyText(text)) done();
+        else alert('コピーできませんでした。');
+      });
+    }else{
+      if(fallbackCopyText(text)) done();
+      else alert('コピーできませんでした。');
+    }
+  }
+
+  function copyPost(postId, button){
+    for(var i=0;i<data.posts.length;i++){
+      if(data.posts[i].id === postId){ copyPlainText(data.posts[i].text, button); return; }
+    }
+  }
+
+  function copyReply(postId, replyId, button){
+    for(var i=0;i<data.posts.length;i++){
+      if(data.posts[i].id !== postId) continue;
+      for(var j=0;j<data.posts[i].replies.length;j++){
+        if(data.posts[i].replies[j].id === replyId){ copyPlainText(data.posts[i].replies[j].text, button); return; }
+      }
+    }
+  }
+
   function copyThread(postId, button){
     var post = null;
     for(var i=0;i<data.posts.length;i++){
@@ -944,6 +1011,7 @@
   els.postButton.addEventListener('click', addPost, false);
   if(els.dateOrderButton) els.dateOrderButton.addEventListener('click', showRootsByDate, false);
   if(els.shuffleButton) els.shuffleButton.addEventListener('click', shuffleRoots, false);
+  if(els.scrollTopButton) els.scrollTopButton.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); }, false);
 
   els.postText.addEventListener('keydown', function(e){
     if((e.ctrlKey || e.metaKey) && e.key === 'Enter') addPost();
@@ -1035,6 +1103,16 @@
 
       if(action === 'copy-thread'){
         copyThread(id, btn);
+        return;
+      }
+
+      if(action === 'copy-post'){
+        copyPost(id, btn);
+        return;
+      }
+
+      if(action === 'copy-reply'){
+        copyReply(btn.getAttribute('data-post-id') || '', btn.getAttribute('data-reply-id') || '', btn);
         return;
       }
 
