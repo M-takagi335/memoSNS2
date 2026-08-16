@@ -199,6 +199,39 @@
 
     .file-input{display:none}
 
+    .calendar-launch{width:28px;height:28px;border:0;background:transparent;color:#929bad;border-radius:8px;padding:4px;display:grid;place-items:center;flex:none;box-shadow:none}
+    .calendar-launch:hover,.calendar-launch:active{background:rgba(255,255,255,.72);color:#667086}
+    .calendar-launch svg{width:16px;height:16px;display:block;pointer-events:none}
+    .calendar-page{display:none;padding:20px 2px 8px}
+    .app.calendar-open .calendar-page{display:block}
+    .app.calendar-open .intro,.app.calendar-open .composer,.app.calendar-open .content-head,.app.calendar-open #timeline,.app.calendar-open .footer,.app.calendar-open .search{display:none}
+    .calendar-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+    .calendar-title{font-size:20px;font-weight:850;letter-spacing:-.02em}
+    .calendar-close{border:1px solid var(--line);background:white;color:#657086;border-radius:11px;padding:8px 11px;font-size:12px;font-weight:800;box-shadow:var(--shadow-soft)}
+    .calendar-shell{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow-soft);padding:14px}
+    .calendar-month-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+    .calendar-month-label{font-size:16px;font-weight:850}
+    .calendar-month-nav{width:32px;height:32px;border:0;background:transparent;border-radius:9px;color:#8b95a7;font-size:19px;line-height:1;display:grid;place-items:center}
+    .calendar-month-nav:hover,.calendar-month-nav:active{background:#f4f6fa;color:#596477}
+    .calendar-weekdays,.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+    .calendar-weekdays{margin-bottom:4px}
+    .calendar-weekdays div{text-align:center;color:#9aa3b3;font-size:10px;font-weight:800;padding:5px 0}
+    .calendar-day{aspect-ratio:1/1;min-height:42px;border:0;background:transparent;border-radius:12px;color:#4d586d;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:3px;font-size:12px;position:relative}
+    .calendar-day:hover,.calendar-day:active{background:#f4f6fa}
+    .calendar-day.outside{color:#c5cbd6}
+    .calendar-day.selected{background:var(--accent-soft);color:var(--accent);font-weight:900}
+    .calendar-day.today:not(.selected){box-shadow:inset 0 0 0 1px #cfd4ff}
+    .calendar-day-count{font-size:9px;line-height:1;color:#8f98aa;min-height:9px}
+    .calendar-day.selected .calendar-day-count{color:#7782e8}
+    .calendar-selected{margin-top:18px}
+    .calendar-date-head{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 12px}
+    .calendar-date-label{min-width:148px;text-align:center;font-size:14px;font-weight:850;color:#4d586d}
+    .calendar-date-nav{width:31px;height:31px;border:1px solid var(--line);background:white;border-radius:10px;color:#7b8597;display:grid;place-items:center;font-size:18px;line-height:1}
+    .calendar-date-nav:hover,.calendar-date-nav:active{background:#f4f6fa}
+    .calendar-ideas{display:block}
+    .calendar-ideas .thread{margin-bottom:12px}
+    .calendar-empty{color:var(--muted);text-align:center;padding:38px 12px;font-size:13px;border:1px dashed #dfe4ee;border-radius:18px;background:rgba(255,255,255,.55)}
+
     @media (max-width:600px){
       .app{padding-left:10px;padding-right:10px;padding-bottom:84px}
       .topbar{margin-left:-10px;margin-right:-10px;padding-left:10px;padding-right:10px}
@@ -225,6 +258,9 @@
         <div class="brand-wrap">
           <div class="brand-mark">✦</div>
           <div class="brand">ひらめきログ</div>
+          <button id="calendarButton" class="calendar-launch" type="button" aria-label="カレンダー" title="カレンダー">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 3.5v4M16 3.5v4M4 9.5h16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
         </div>
         <div class="top-actions">
           <button id="scrollTopButton" class="top-btn" type="button" aria-label="一番上に戻る" title="一番上に戻る">
@@ -253,6 +289,30 @@
         <button class="clear-btn" id="clearSearch" type="button">クリア</button>
       </div>
     </header>
+
+    <section id="calendarPage" class="calendar-page" aria-hidden="true">
+      <div class="calendar-top">
+        <div class="calendar-title">カレンダー</div>
+        <button id="calendarClose" class="calendar-close" type="button">一覧に戻る</button>
+      </div>
+      <div class="calendar-shell">
+        <div class="calendar-month-head">
+          <button class="calendar-month-nav" type="button" data-calendar-action="prev-month" aria-label="前の月">‹</button>
+          <div id="calendarMonthLabel" class="calendar-month-label"></div>
+          <button class="calendar-month-nav" type="button" data-calendar-action="next-month" aria-label="次の月">›</button>
+        </div>
+        <div class="calendar-weekdays"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div>
+        <div id="calendarGrid" class="calendar-grid"></div>
+      </div>
+      <div class="calendar-selected">
+        <div class="calendar-date-head">
+          <button class="calendar-date-nav" type="button" data-calendar-action="prev-day" aria-label="前の日">‹</button>
+          <div id="calendarDateLabel" class="calendar-date-label"></div>
+          <button class="calendar-date-nav" type="button" data-calendar-action="next-day" aria-label="次の日">›</button>
+        </div>
+        <div id="calendarIdeas" class="calendar-ideas"></div>
+      </div>
+    </section>
 
     <section class="intro">
       <div class="eyebrow">IDEA NOTE</div>
@@ -331,7 +391,14 @@
     importJsonFile: $('importJsonFile'),
     dateOrderButton: $('dateOrderButton'),
     shuffleButton: $('shuffleButton'),
-    scrollTopButton: $('scrollTopButton')
+    scrollTopButton: $('scrollTopButton'),
+    calendarButton: $('calendarButton'),
+    calendarPage: $('calendarPage'),
+    calendarClose: $('calendarClose'),
+    calendarMonthLabel: $('calendarMonthLabel'),
+    calendarGrid: $('calendarGrid'),
+    calendarDateLabel: $('calendarDateLabel'),
+    calendarIdeas: $('calendarIdeas')
   };
 
   var view = 'roots';
@@ -342,6 +409,10 @@
   var pendingDelete = null;
   var pendingEdit = null;
   var shuffledRootIds = null;
+  var calendarOpen = false;
+  var calendarSelectedDate = startOfDay(new Date());
+  var calendarMonthDate = new Date(calendarSelectedDate.getFullYear(), calendarSelectedDate.getMonth(), 1);
+  var focusedFromCalendar = false;
 
   function shuffledCopy(items){
     var out = items.slice();
@@ -453,6 +524,93 @@
       if(t && out.indexOf(t) === -1) out.push(t);
     }
     return out;
+  }
+
+  function startOfDay(value){
+    var d = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  function sameDay(a,b){
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+
+  function addCalendarDays(date, amount){
+    var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    d.setDate(d.getDate() + amount);
+    return d;
+  }
+
+  function calendarDateKey(date){
+    var pad = function(n){ return String(n).padStart(2,'0'); };
+    return date.getFullYear() + '-' + pad(date.getMonth()+1) + '-' + pad(date.getDate());
+  }
+
+  function formatCalendarDate(date){
+    return new Intl.DateTimeFormat('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'short'}).format(date);
+  }
+
+  function renderCalendar(){
+    if(!calendarOpen) return;
+    var year = calendarMonthDate.getFullYear();
+    var month = calendarMonthDate.getMonth();
+    els.calendarMonthLabel.textContent = year + '年' + (month + 1) + '月';
+    els.calendarDateLabel.textContent = formatCalendarDate(calendarSelectedDate);
+
+    var counts = {};
+    for(var i=0;i<data.posts.length;i++){
+      var pd = new Date(data.posts[i].createdAt);
+      var key = calendarDateKey(pd);
+      counts[key] = (counts[key] || 0) + 1;
+    }
+
+    var first = new Date(year, month, 1);
+    var gridStart = new Date(year, month, 1 - first.getDay());
+    var today = startOfDay(new Date());
+    var html = '';
+    for(var c=0;c<42;c++){
+      var d = addCalendarDays(gridStart, c);
+      var key = calendarDateKey(d);
+      var classes = 'calendar-day';
+      if(d.getMonth() !== month) classes += ' outside';
+      if(sameDay(d, calendarSelectedDate)) classes += ' selected';
+      if(sameDay(d, today)) classes += ' today';
+      html += '<button type="button" class="' + classes + '" data-calendar-date="' + key + '">' +
+        '<span>' + d.getDate() + '</span><span class="calendar-day-count">' + (counts[key] ? counts[key] + '件' : '') + '</span></button>';
+    }
+    els.calendarGrid.innerHTML = html;
+
+    var selectedPosts = data.posts.slice().filter(function(post){
+      return sameDay(new Date(post.createdAt), calendarSelectedDate);
+    }).sort(function(a,b){ return b.createdAt - a.createdAt; });
+
+    if(!selectedPosts.length){
+      els.calendarIdeas.innerHTML = '<div class="calendar-empty">この日のアイデアはありません</div>';
+      return;
+    }
+    var ideas = '';
+    for(var p=0;p<selectedPosts.length;p++){
+      ideas += '<div class="thread">' + renderRootCard(selectedPosts[p], false) + '</div>';
+    }
+    els.calendarIdeas.innerHTML = ideas;
+  }
+
+  function openCalendar(){
+    calendarOpen = true;
+    focusedPostId = '';
+    focusedFromCalendar = false;
+    document.querySelector('.app').classList.add('calendar-open');
+    els.calendarPage.setAttribute('aria-hidden','false');
+    renderCalendar();
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  function closeCalendar(){
+    calendarOpen = false;
+    document.querySelector('.app').classList.remove('calendar-open');
+    els.calendarPage.setAttribute('aria-hidden','true');
+    render();
+    window.scrollTo({top:0, behavior:'smooth'});
   }
 
   function formatDate(ts){
@@ -696,6 +854,8 @@
 
   function render(){
     try{
+      if(focusedPostId && calendarOpen){ document.querySelector('.app').classList.remove('calendar-open'); }
+      else if(calendarOpen){ document.querySelector('.app').classList.add('calendar-open'); renderCalendar(); return; }
       var posts = data.posts.slice().sort(function(a,b){ return b.createdAt - a.createdAt; }).filter(postMatches);
 
       if(els.dateOrderButton){
@@ -1054,6 +1214,43 @@
     importDataFile(els.importJsonFile.files && els.importJsonFile.files[0]);
   }, false);
 
+  if(els.calendarButton) els.calendarButton.addEventListener('click', openCalendar, false);
+  if(els.calendarClose) els.calendarClose.addEventListener('click', closeCalendar, false);
+
+  if(els.calendarPage) els.calendarPage.addEventListener('click', function(e){
+    var dayBtn = closest(e.target, '[data-calendar-date]');
+    if(dayBtn){
+      var parts = dayBtn.getAttribute('data-calendar-date').split('-');
+      calendarSelectedDate = new Date(Number(parts[0]), Number(parts[1])-1, Number(parts[2]));
+      calendarMonthDate = new Date(calendarSelectedDate.getFullYear(), calendarSelectedDate.getMonth(), 1);
+      renderCalendar();
+      return;
+    }
+    var ideaBtn = closest(e.target, '[data-calendar-post-id]');
+    if(ideaBtn){
+      focusedPostId = ideaBtn.getAttribute('data-calendar-post-id') || '';
+      focusedFromCalendar = true;
+      render();
+      window.scrollTo({top:0, behavior:'smooth'});
+      return;
+    }
+    var nav = closest(e.target, '[data-calendar-action]');
+    if(!nav) return;
+    var action = nav.getAttribute('data-calendar-action');
+    if(action === 'prev-day') calendarSelectedDate = addCalendarDays(calendarSelectedDate, -1);
+    if(action === 'next-day') calendarSelectedDate = addCalendarDays(calendarSelectedDate, 1);
+    if(action === 'prev-month'){
+      calendarMonthDate = new Date(calendarMonthDate.getFullYear(), calendarMonthDate.getMonth()-1, 1);
+      calendarSelectedDate = new Date(calendarMonthDate.getFullYear(), calendarMonthDate.getMonth(), 1);
+    }
+    if(action === 'next-month'){
+      calendarMonthDate = new Date(calendarMonthDate.getFullYear(), calendarMonthDate.getMonth()+1, 1);
+      calendarSelectedDate = new Date(calendarMonthDate.getFullYear(), calendarMonthDate.getMonth(), 1);
+    }
+    if(action === 'prev-day' || action === 'next-day') calendarMonthDate = new Date(calendarSelectedDate.getFullYear(), calendarSelectedDate.getMonth(), 1);
+    renderCalendar();
+  }, false);
+
   document.addEventListener('click', function(e){
     if(els.appMenu && els.appMenu.classList.contains('open') && !closest(e.target, '#appMenu') && !closest(e.target, '#menuButton')) setMenuOpen(false);
     var viewBtn = closest(e.target, '[data-view]');
@@ -1076,6 +1273,7 @@
       var form;
 
       if(action === 'reply'){
+        if(calendarOpen) focusedFromCalendar = true;
         focusedPostId = id;
         render();
         setTimeout(function(){
@@ -1088,6 +1286,13 @@
       if(action === 'back-list'){
         var returnPostId = focusedPostId;
         focusedPostId = '';
+        if(focusedFromCalendar){
+          focusedFromCalendar = false;
+          document.querySelector('.app').classList.add('calendar-open');
+          renderCalendar();
+          window.scrollTo({top:0, behavior:'smooth'});
+          return;
+        }
         render();
         setTimeout(function(){
           var target = returnPostId ? document.querySelector('.card[data-post-id="' + CSS.escape(returnPostId) + '"]') : null;
@@ -1208,6 +1413,7 @@
     if(rootCard && !focusedPostId){
       var pid = rootCard.getAttribute('data-post-id');
       if(pid){
+        if(calendarOpen) focusedFromCalendar = true;
         focusedPostId = pid;
         render();
         window.scrollTo({top:0, behavior:'smooth'});
